@@ -29,7 +29,18 @@ def main_event_loop():
             if command[0] == "balance":
                 print(atm.get_balance(token)[1])
             if command[0] == "history":
-                print(atm.get_history(token)[1])
+                result, history = atm.get_history(token)
+
+                if result == False:
+                    print(history)
+                    continue
+
+                for line in history:
+                    try:
+                        print("{} {} {}".format(line[0], line[1], line[2]))
+                    except IndexError:
+                        print("Failure to Parse History")
+
             if command[0] == "logout":
                 print(atm.log_out(token)[1])
         except IndexError:
