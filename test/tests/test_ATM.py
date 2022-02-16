@@ -39,7 +39,7 @@ def test_ATM_Login(atm, account_id, pin, result, message):
 def test_ATM_Withdrawl(atm, account_id, pin, amount, result, message): 
     token = atm.authorize(account_id, pin)[-1]
     print(token)
-    response = atm.withdrawl(amount, token)
+    response = atm.withdraw(amount, token)
     print(response)
     
     assert  response[0] == result and response[1] == message
@@ -51,8 +51,8 @@ def test_ATM_Withdrawl(atm, account_id, pin, amount, result, message):
 )
 def test_ATM_Double_Withdrawl(atm, account_id, pin, amount, result, message):
     token = atm.authorize(account_id, pin)[-1]
-    atm.withdrawl(amount, token)
-    response = atm.withdrawl(20, token)
+    atm.withdraw(amount, token)
+    response = atm.withdraw(20, token)
 
     assert  response[0] == result and response[1] == message
 
