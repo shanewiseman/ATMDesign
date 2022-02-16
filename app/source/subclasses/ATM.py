@@ -41,24 +41,26 @@ class ATM(object):
         self.storage = Storage()
         self.logged_in = {}
 
+        self.dummy_data = [("2859459814","7386",10.24), ("1434597300","4557",90000.55),("7089382418","0075",0.00), ("2001377812","5950",60.00)]
+
     def insert_dummy_data(self):
         #for time sake, just inserting dummy data, would normally parse this from file
-        for account in [("2859459814","7386",10.24), ("1434597300","4557",90000.55),("7089382418","0075",0.00), ("2001377812","5950",60.00)]:
+        for account in self.dummy_data:
             self.storage.add_account(account[0], account[1], account[2])
 
-    def is_authed(token: str) -> str:
+    def is_authed(self, token: str) -> str:
         try:
-            data = ATMToken.decode_token(token)
-            if data["account_id"] in self.logged_in:
-                if int(time.time()) - data["created"] >= self.auth_time:
+            data = ATMToken.decode_token(token, self.secret_key)
+            if data.account_id in self.logged_in:
+                if int(time.time()) - data.created >= self.auth_time:
                     self.logged_in.pop(account_id, None)
                     raise ATMException("Token Expired")
 
-                return data["account_id"]
+                return data.account_id
             else:
                 raise ATMException("Authorization failed.")
 
-        except Exception:
+        except Exception as ex:
             raise ATMException("Invalid Token")
 
 
@@ -66,7 +68,7 @@ class ATM(object):
         try:
             if self.storage.get_account(account_id).pin == hashlib.sha256(pin.encode()).hexdigest():
                     self.logged_in[account_id] = True
-                    return True, ATMToken.create_token(account_id, self.secret_key)
+                    return True, "{} successfully authorized.".format(account_id), ATMToken.create_token(account_id, self.secret_key)
             else:
                 return False, "Authorization failed."
 
@@ -74,11 +76,11 @@ class ATM(object):
             return False, "Authorization failed."
 
 
-    def withdrawl(self, value: int, token: str) -> (bool,str):
+    def withdraw(self, value: int, token: str) -> (bool,str):
         account_id = None
         try:
             account_id = self.is_authed(token)
-        except ATMException:
+        except ATMException as ex:
             return False, "Authorization required."
 
         if value <= 0 or value % self.cash_multiples != 0:
@@ -108,7 +110,9 @@ class ATM(object):
         else:
 
             if balance < value:
-                return True, "You have been charged an overdraft fee of ${}. Current balance:{}".format(
+                self.storage.add_transaction(account_id, (value + self.overdraft_penalty) * -1)
+                self.cash_available -= (value + self.overdraft_penalty)
+                return True, "You have been charged an overdraft fee of ${}. Current balance: {}".format(
                     self.overdraft_penalty, self.storage.get_balance(account_id))
             else:
 
@@ -118,14 +122,14 @@ class ATM(object):
 
 
 
-    def deposit(self, value: int, token: str) -> (bool, str):
+    def deposit(self, value: float, token: str) -> (bool, str):
         account_id = None
         try:
             account_id = self.is_authed(token)
         except ATMException:
             return False, "Authorization required."
 
-        self.storage.add_transaction(account_id, value)
+        self.storage.add_transaction(account_id, float(value))
         return True, "Current balance: {}".format(self.storage.get_balance(account_id))
 
 
@@ -146,11 +150,11 @@ class ATM(object):
         except ATMException:
             return False, "Authorization required."
         
-        transactions = None
+        transactions = [] 
         for line in self.storage.get_all_transactions(account_id):
-            transactoins.append(datetime.fromtimestamp(line[0]),line[1], line[2])
+            transactions.append([datetime.fromtimestamp(line[0]),line[1], line[2]])
 
-        if len(transactions) == 0:
+        if len(transactions) < 2:
             return False, "No History Found"
 
         return True, transactions

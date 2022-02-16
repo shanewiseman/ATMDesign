@@ -95,11 +95,11 @@ class Storage(object):
         if account_id in self.accounts:
 
             transactions = []
-            node = self.read_node(self.accounts[account_id].trx[0])
+            node = self.read_node(self.accounts[account_id].trx[1])
 
-            while node.after != None:
+            while node.before != None:
                 transactions.append((node.time, node.amount, node.balance))
-                node = self.read_node(node.next)
+                node = self.read_node(node.before)
 
             transactions.append((node.time, node.amount, node.balance))
             return transactions
@@ -108,19 +108,17 @@ class Storage(object):
             raise StorageException("Account Does Not Exist")
     
 
-
-
     def write_nodes(self, nodes: List[TransactionNode]) -> None:
         for node in nodes:
             try:
-                with open("{}.transaction".format(node.uuid), "wb") as fh:
+                with open("/tmp/{}.transaction".format(node.uuid), "wb") as fh:
                     pickle.dump(node, fh)
             except Exception as ex:
                 raise StorageException(ex)
 
     def read_node(self, node_uuid: str) -> TransactionNode:
         try:
-            with open("{}.transaction".format(node_uuid), "rb") as fh:
+            with open("/tmp/{}.transaction".format(node_uuid), "rb") as fh:
                 return pickle.load(fh)
         except Exception as ex:
             raise StorageException(ex)
