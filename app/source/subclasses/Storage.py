@@ -10,7 +10,7 @@ class StorageException(Exception):
 
 
 class TransactionNode(object):
-    def __init__(self, before: str, amount: int, balance: int, after:str) -> str:
+    def __init__(self, before: str, amount: int, balance: float, after:str) -> str:
 
         if amount is None or balance is None:
             raise StorageException("ArgumentValueError")
@@ -37,9 +37,9 @@ class Storage(object):
 
     def __init__(self):
         self.accounts = {}
-    
 
-    def add_account(self, account_id: str, pin: str, balance: int) -> bool:
+
+    def add_account(self, account_id: str, pin: str, balance: float) -> bool:
 
         if account_id not in self.accounts:
             node = TransactionNode(None, balance, balance, None)
@@ -63,7 +63,7 @@ class Storage(object):
             raise StorageException("Account Does Not Exist")
 
 
-    def get_balance(self, account_id: str) -> int:
+    def get_balance(self, account_id: str) -> float:
 
         if account_id in self.accounts:
             return self.get_last_transaction(account_id).balance
@@ -88,21 +88,39 @@ class Storage(object):
     def get_last_transaction(self, account_id):
         if account_id in self.accounts:
             return self.read_node(self.accounts[account_id].trx[1])
+        else:
+            raise StorageException("Account Does Not Exist")
 
     def get_all_transactions(self, account_id):
-        pass
+        if account_id in self.accounts:
 
-    def write_nodes(nodes: List[TransactionNode]) -> None:
+            transactions = []
+            node = self.read_node(self.accounts[account_id].trx[0])
+
+            while node.after != None:
+                transactions.append((node.time, node.amount, node.balance))
+                node = self.read_node(node.next)
+
+            transactions.append((node.time, node.amount, node.balance))
+            return transactions
+            
+        else:
+            raise StorageException("Account Does Not Exist")
+    
+
+
+
+    def write_nodes(self, nodes: List[TransactionNode]) -> None:
         for node in nodes:
             try:
-                with open("{}.transaction".format(node.uuid)) as fh:
+                with open("{}.transaction".format(node.uuid), "wb") as fh:
                     pickle.dump(node, fh)
             except Exception as ex:
                 raise StorageException(ex)
 
-    def read_node(node_uuid: str) -> TransactionNode:
+    def read_node(self, node_uuid: str) -> TransactionNode:
         try:
-            with open("{}.transaction".format(node_uuid)) as fh:
+            with open("{}.transaction".format(node_uuid), "rb") as fh:
                 return pickle.load(fh)
         except Exception as ex:
             raise StorageException(ex)
