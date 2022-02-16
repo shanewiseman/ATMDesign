@@ -26,13 +26,11 @@ class ATMToken(object):
     @staticmethod
     def decode_token(token: str, key: str) -> dict: 
         token_data = json.dumps(jwt.decode(token, key, algorithms=["HS256"]))
-        #LOG
         return json.loads(token_data, object_hook= lambda x: SimpleNamespace(**x))
 
 
 class ATM(object):
     def __init__(self):
-        #abstract this
         self.secret_key = "secret"
         self.auth_time = 120
         self.overdraft_penalty = 5
@@ -52,10 +50,13 @@ class ATM(object):
         try:
             data = ATMToken.decode_token(token, self.secret_key)
             if data.account_id in self.logged_in:
-                if int(time.time()) - data.created >= self.auth_time:
+                # is login expired?
+                if int(time.time()) - self.logged_in[data.account_id] >= self.auth_time:
                     self.logged_in.pop(account_id, None)
                     raise ATMException("Token Expired")
-
+               
+                # refresh login time
+                self.logged_in[data.account_id] = int(time.time())
                 return data.account_id
             else:
                 raise ATMException("Authorization failed.")
@@ -67,7 +68,7 @@ class ATM(object):
     def authorize(self, account_id: str, pin: str) -> str:
         try:
             if self.storage.get_account(account_id).pin == hashlib.sha256(pin.encode()).hexdigest():
-                    self.logged_in[account_id] = True
+                    self.logged_in[account_id] = int(time.time())
                     return True, "{} successfully authorized.".format(account_id), ATMToken.create_token(account_id, self.secret_key)
             else:
                 return False, "Authorization failed."
@@ -96,11 +97,14 @@ class ATM(object):
             return False, "Unable to process your withdrawal at this time."
 
 
+        # does the atm have cash?
         if self.cash_available < value:
             value = int(self.cash_available / self.cash_multiples) * self.cash_multiples
 
             self.storage.add_transaction(account_id, (value + self.overdraft_penalty) * -1)
             self.cash_available -= value 
+
+            # does user have enough money?
             if balance < value:
                 return True, "You have been charged an overdraft fee of ${}. Current balance:{}".format(
                     self.overdraft_penalty, self.storage.get_balance(account_id))
@@ -109,6 +113,7 @@ class ATM(object):
 
         else:
 
+            # does user have enough money?
             if balance < value:
                 self.storage.add_transaction(account_id, (value + self.overdraft_penalty) * -1)
                 self.cash_available -= (value + self.overdraft_penalty)
@@ -152,8 +157,9 @@ class ATM(object):
         
         transactions = [] 
         for line in self.storage.get_all_transactions(account_id):
-            transactions.append([datetime.fromtimestamp(line[0]),line[1], line[2]])
+            transactions.append([str(datetime.fromtimestamp(line[0])),line[1], line[2]])
 
+        # wont consider account init as "history", which contains one entry
         if len(transactions) < 2:
             return False, "No History Found"
 

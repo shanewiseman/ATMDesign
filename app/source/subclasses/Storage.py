@@ -73,6 +73,7 @@ class Storage(object):
 
         if account_id in self.accounts:
 
+            # grab last transaction, need to update it's pointers
             last_trx = self.get_last_transaction(account_id)
             new_trx = TransactionNode(last_trx.uuid, value, (last_trx.balance + value), None)
             last_trx.after = new_trx.uuid
