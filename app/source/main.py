@@ -1,4 +1,4 @@
-from subclasses.ATM import ATM
+from subclasses.ATM import ATM, ATMException
 import time
 
 
@@ -22,12 +22,20 @@ def main_event_loop():
                     # no token
                     pass
                 print(response[1])
+
             if command[0] == "withdraw":
-                print(atm.withdraw(int(command[1]), token)[1])
+                result, message = atm.withdraw(int(command[1]), token)
+
+                if result:
+                    print("Amount dispensed: {}".format(command[1]))
+                print(message)
+
             if command[0] == "deposit":
                 print(atm.deposit(float(command[1]), token)[1])
+
             if command[0] == "balance":
                 print(atm.get_balance(token)[1])
+
             if command[0] == "history":
                 result, history = atm.get_history(token)
 
@@ -43,9 +51,12 @@ def main_event_loop():
 
             if command[0] == "logout":
                 print(atm.log_out(token)[1])
+
         except IndexError:
             print(command)
             print("Invalid Command")
+        except ATMException as ex:
+            print(ex)
 
         time.sleep(1)
 
