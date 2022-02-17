@@ -106,10 +106,10 @@ class ATM(object):
 
             # does user have enough money?
             if balance < value:
-                return True, "You have been charged an overdraft fee of ${}. Current balance:{}".format(
+                return False, "You have been charged an overdraft fee of ${}. Current balance: {:.2f}".format(
                     self.overdraft_penalty, self.storage.get_balance(account_id))
             else:
-               return True, "Unable to dispense full amount requested at this time." 
+               return False, "Unable to dispense full amount requested at this time." 
 
         else:
 
@@ -117,13 +117,13 @@ class ATM(object):
             if balance < value:
                 self.storage.add_transaction(account_id, (value + self.overdraft_penalty) * -1)
                 self.cash_available -= (value + self.overdraft_penalty)
-                return True, "You have been charged an overdraft fee of ${}. Current balance: {}".format(
+                return True, "You have been charged an overdraft fee of ${}. Current balance: {:.2f}".format(
                     self.overdraft_penalty, self.storage.get_balance(account_id))
             else:
 
                 self.storage.add_transaction(account_id, value * -1)
                 self.cash_available -= value
-                return True, "Current balance: {}".format(self.storage.get_balance(account_id))
+                return True, "Current balance: {:.2f}".format(self.storage.get_balance(account_id))
 
 
 
@@ -135,7 +135,7 @@ class ATM(object):
             return False, "Authorization required."
 
         self.storage.add_transaction(account_id, float(value))
-        return True, "Current balance: {}".format(self.storage.get_balance(account_id))
+        return True, "Current balance: {:.2f}".format(self.storage.get_balance(account_id))
 
 
 
@@ -146,7 +146,7 @@ class ATM(object):
         except ATMException:
             return False, "Authorization required."
 
-        return True, "Current balance: {}".format(self.storage.get_balance(account_id))
+        return True, "Current balance: {:.2f}".format(self.storage.get_balance(account_id))
 
     def get_history(self, token: str) -> List[str]:
         account_id = None

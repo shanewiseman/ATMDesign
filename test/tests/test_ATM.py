@@ -31,9 +31,9 @@ def test_ATM_Login(atm, account_id, pin, result, message):
 
 @pytest.mark.parametrize(
     "account_id, pin, amount, result, message",
-    [(dummy_data[3][0], dummy_data[3][1], 20, True, "Current balance: {}".format(dummy_data[3][2] - 20)),
-    (dummy_data[3][0], dummy_data[3][1], 80, True, "You have been charged an overdraft fee of $5. Current balance: {}".format(dummy_data[3][2] - 85)),
-    (dummy_data[1][0], dummy_data[1][1], 10020, True, "Unable to dispense full amount requested at this time.".format(dummy_data[1][2] - 10000)),
+    [(dummy_data[3][0], dummy_data[3][1], 20, True, "Current balance: {:.2f}".format(dummy_data[3][2] - 20)),
+    (dummy_data[3][0], dummy_data[3][1], 80, True, "You have been charged an overdraft fee of $5. Current balance: {:.2f}".format(dummy_data[3][2] - 85)),
+    (dummy_data[1][0], dummy_data[1][1], 10020, False, "Unable to dispense full amount requested at this time.".format(dummy_data[1][2] - 10000)),
     (dummy_data[3][0], "bad_pin", 20, False, "Authorization required.")]
 )
 def test_ATM_Withdrawl(atm, account_id, pin, amount, result, message): 
