@@ -1,3 +1,5 @@
+#!/bin/bash
+
 which docker > /dev/null && docker ps > /dev/null
 
 if [ $? != 0 ]; then
