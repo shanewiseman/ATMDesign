@@ -117,7 +117,7 @@ class ATM(object):
             if balance < value:
                 self.storage.add_transaction(account_id, (value + self.overdraft_penalty) * -1)
                 self.cash_available -= (value + self.overdraft_penalty)
-                return True, "You have been charged an overdraft fee of ${}. Current balance: {}".format(
+                return True, "You have been charged an overdraft fee of ${}. Current balance: {:.2f}".format(
                     self.overdraft_penalty, self.storage.get_balance(account_id))
             else:
 
