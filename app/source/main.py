@@ -24,7 +24,10 @@ def main_event_loop():
                 print(response[1])
 
             if command[0] == "withdraw":
-                result, message = atm.withdraw(int(command[1]), token)
+                if float(command[1]) * 100 % 100 != 0:
+                    raise ATMException("Invalid Transaction Amount")
+
+                result, message = atm.withdraw(int(float(command[1])), token)
 
                 if result:
                     print("Amount dispensed: {}".format(command[1]))
